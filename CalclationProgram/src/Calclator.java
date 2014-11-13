@@ -10,6 +10,7 @@ import java.util.Stack;
 
 //構文解析部のエラー
 class MyParseException extends Exception{
+	private static final long serialVersionUID = 1L;
 	MyParseException(String text){
 		super(text);
 	}
@@ -47,7 +48,7 @@ public class Calclator{
 
 	//プログラムコードの実行部分
 	public Double runningProgram(){
-		System.out.println("RUNNNING PROGRAM CODE");
+		System.out.println("\nRUNNNING PROGRAM:");
 		Map<String,Double> variablelist=new HashMap<String,Double>();
 		for(int index=0;index<fouraddressprogram.size();index++){
 			Double number1=new Double(0);
@@ -76,47 +77,66 @@ public class Calclator{
 			answer=resultnumber;
 			variablelist.put(fouraddressprogram.get(index)[0].entity,resultnumber);
 
-
 		}
 		return answer;
+	}
+	//構文解析部
+	public void parseToken2(){
+		//構文解析部
+		Stack<Token> parsestack = new Stack<Token>();
+		int	minpriority=-1;//-1は空
+		for(int index=0;index<tokenlist.size();index++){
+			int priority=tokenlist.get(index).priority;
+			if((tokenlist.get(index).attribute==1) || (tokenlist.get(index).attribute==10) ){//数値または変数である
+				parsestack.add(tokenlist.get(index));
+			}else{//演算子
+				if(minpriority == -1){
+					minpriority = tokenlist.get(index).priority;
+				}
+
+				if(priority<minpriority){
+
+				}
+
+			}
+		}
 	}
 	//構文解析部
 	public void parseToken(){
 		//構文解析部
 		Stack<Token> parsestack = new Stack<Token>();
 		int	minpriority=-1;//-1は空
-
+		Token token;
 		for(int index=0;index<tokenlist.size();index++){
-			int priority=getPriority(tokenlist.get(index));
+			int priority=tokenlist.get(index).priority;
+			token = tokenlist.get(index);
 			if((tokenlist.get(index).attribute==1) || (tokenlist.get(index).attribute==10) ){//変数である
 				parsestack.add(tokenlist.get(index));
 			}else{
 				//演算子の場合の処理
-				if(tokenlist.get(index).attribute==11){
-					priority=9;
-					index++;
-				}
 				//空
 				if(minpriority==-1){
-					System.out.println("mintoken:"+tokenlist.get(index).entity);
-					minpriority=getPriority(tokenlist.get(index));
+					//System.out.println("mintoken:"+tokenlist.get(index).entity);
+					minpriority=tokenlist.get(index).priority;
 				}
-				if((priority<minpriority) || (tokenlist.get(index).attribute==12)){
-					if(tokenlist.get(index).attribute==12)index++;
+				if(priority>=minpriority){
+					if(index<tokenlist.size()){
+						parsestack.add(tokenlist.get(index));
+					}
+					minpriority = priority;
+				}else{
 
 					//取り出す処理//同じ処理が複数箇所に存在。要モジュール化検討
-					for(int i=0;parsestack.size()>=3;i++){
-						System.out.println("stacksize:"+parsestack.size());
+					for(int i=0;priority<minpriority && parsestack.size()>=3;i++){
+						//int i=0;
 						Token[] fourtoken = new Token[4];
 						fourtoken[0]=new Token(10,"variable"+index+i,10);
 						try{
 							//取り出す処理 数字→演算子→数字
 							Token pop1st =parsestack.pop();
-							//System.out.println("pop1:"+pop1.entity +":");
 							if(getPriority(pop1st)==10){//数字
 								fourtoken[3]=pop1st;
 								Token pop2nd =parsestack.pop();
-								//System.out.println("pop2:"+pop2.entity);
 								if(getPriority(pop2nd)!=10){//演算子
 									fourtoken[2]=pop2nd;
 									Token pop3rd =parsestack.pop();
@@ -127,20 +147,21 @@ public class Calclator{
 								}else throw(new MyParseException("GrammerError code:2"));
 							}else throw(new MyParseException("GrammerError code:1"));
 						}catch(Exception e){
-							System.out.println("文法がおかしい可能性がある("+e.getMessage()+")");
+							System.out.println("文法がおかしい("+e.getMessage()+")");
 						}
-
 						fouraddressprogram.add(fourtoken);
 						parsestack.add(fourtoken[0]);
+						if(parsestack.size()>=3){
+							minpriority = parsestack.get(parsestack.size()-2).priority;//tokenlist.get(index).priority;
+						}else{
+							//minpriority = -1;
+						}
 					}//for
-					if(index<tokenlist.size()){
-						parsestack.add(tokenlist.get(index));
-						minpriority = getPriority(tokenlist.get(index));
-					}
-				}else{
-					if(index<tokenlist.size()){
-						parsestack.add(tokenlist.get(index));
-					}
+
+
+					parsestack.add(tokenlist.get(index));
+					minpriority = tokenlist.get(index).priority;
+
 				}
 
 			}
@@ -150,7 +171,7 @@ public class Calclator{
 
 			//取り出す処理//同じ処理が複数箇所に存在。要モジュール化検討
 			for(int i=0;parsestack.size()>=3;i++){
-				System.out.println("stacksize:"+parsestack.size());
+
 				Token[] fourtoken = new Token[4];
 				fourtoken[0]=new Token(10,"variable"+"last"+i,10);
 				try{
@@ -184,21 +205,21 @@ public class Calclator{
 		int		brickcount=0;//括弧の量を
 		int		attributehistory=0;//前回の解析した属性を記憶
 		for(int index=0;index<code.length();index++){
-			if((attributehistory==0) || (attributehistory==getAttribute(code.charAt(index))) ){
+			if( (attributehistory==0) || (attributehistory==getAttribute(code.charAt(index))) ){
 				buffer+=""+code.charAt(index);
 			}else{
-				tokenlist.add(new Token(attributehistory,buffer,getPriority(attributehistory)+(100*brickcount)));
+				if(!(attributehistory==11 || attributehistory == 12)){
+					tokenlist.add(new Token(attributehistory,buffer,getPriority(attributehistory)+(100*brickcount)));
+				}
 				buffer="";
 				buffer+=""+code.charAt(index);
 			}
 			attributehistory=getAttribute(code.charAt(index));
 
-
 			if(getAttribute(code.charAt(index))==12){// ')'
 				--brickcount;
 			}else if(getAttribute(code.charAt(index))==11){// '('
 				++brickcount;
-
 			}
 		}
 		if(!(attributehistory==11 || attributehistory == 12)){//最後の文字列が括弧だった時は処理をスキップ
@@ -208,7 +229,7 @@ public class Calclator{
 	}
 	//四コードの表示
 	public void viewFourprogram(){
-		System.out.println("FourcodeViewer");
+		System.out.println("\nFourcodeView:");
 		for(int index1=0;index1<fouraddressprogram.size();index1++){
 			for(int index2=0;index2<fouraddressprogram.get(index1).length;++index2){
 				System.out.print("["+fouraddressprogram.get(index1)[index2].entity+"]");
@@ -218,6 +239,7 @@ public class Calclator{
 	}
 	//トークンの表示
 	public void viewTokens(){
+		System.out.println("\nTokenView:");
 		for(int index=0;index<tokenlist.size();index++){
 			System.out.print("["+tokenlist.get(index).entity+":"+tokenlist.get(index).priority+"]");
 		}
