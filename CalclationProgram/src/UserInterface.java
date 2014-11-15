@@ -12,13 +12,9 @@ public class UserInterface {
 
 	public static void main(String []args){
 		System.out.println("PROGRAM START");
-		try{
-			UserInterface userinterface=new UserInterface();
-			userinterface.startProgram();
-		}catch(Exception e){
-			System.out.println("ERROR 該当箇所不明プログラムエラー ("+ e.getMessage()+")");
-
-		}
+		UserInterface userinterface=new UserInterface();
+		userinterface.startProgram();
+	
 	}
 	public void startProgram(){
 		System.out.println("数式を入力してください");
