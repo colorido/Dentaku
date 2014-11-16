@@ -1,4 +1,7 @@
-
+/*
+検証用のソースコード
+プロジェクト自体とは関係がない
+*/
 public class ExampleCode {
 
 	public static void main(String[] args) {
